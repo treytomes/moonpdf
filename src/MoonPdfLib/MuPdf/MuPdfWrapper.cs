@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -342,7 +343,12 @@ namespace MoonPdfLib.MuPdf
 
         public MemorySource(byte[] bytes)
         {
-            this.Bytes = bytes;
+            Bytes = bytes;
         }
+
+		public MemorySource(MemoryStream stream)
+		{
+			Bytes = stream.GetBuffer();
+		}
     }
 }

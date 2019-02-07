@@ -14,13 +14,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*/
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
+
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using MouseKeyboardActivityMonitor;
 using MouseKeyboardActivityMonitor.WinApi;
@@ -31,25 +26,54 @@ namespace MoonPdfLib
 {
 	internal class MoonPdfPanelInputHandler
 	{
-		private MouseHookListener mouseHookListener;
-		private MoonPdfPanel source;
-		private Point? lastMouseDownLocation;
-		private double lastMouseDownVerticalOffset;
-		private double lastMouseDownHorizontalOffset;
+		#region Fields
+
+		private MouseHookListener _mouseHookListener;
+		private MoonPdfPanel _source;
+		private System.Windows.Point? _lastMouseDownLocation;
+		private double _lastMouseDownVerticalOffset;
+		private double _lastMouseDownHorizontalOffset;
+
+		#endregion
+
+		#region Constructors
 
 		public MoonPdfPanelInputHandler(MoonPdfPanel source)
 		{
-			this.source = source;
+			_source = source;
 
-			this.source.PreviewKeyDown += source_PreviewKeyDown;
-			this.source.PreviewMouseWheel += source_PreviewMouseWheel;
-			this.source.PreviewMouseLeftButtonDown += source_PreviewMouseLeftButtonDown;
+			_source.PreviewKeyDown += source_PreviewKeyDown;
+			_source.PreviewMouseWheel += source_PreviewMouseWheel;
+			_source.PreviewMouseLeftButtonDown += source_PreviewMouseLeftButtonDown;
 
-			this.mouseHookListener = new MouseHookListener(new GlobalHooker());
-			this.mouseHookListener.Enabled = false;
-			this.mouseHookListener.MouseMove += mouseHookListener_MouseMove;
-			this.mouseHookListener.MouseUp += mouseHookListener_MouseUp;
+			_mouseHookListener = new MouseHookListener(new GlobalHooker());
+			_mouseHookListener.Enabled = false;
+			_mouseHookListener.MouseMove += mouseHookListener_MouseMove;
+			_mouseHookListener.MouseUp += mouseHookListener_MouseUp;
 		}
+
+		#endregion
+
+		#region Methods
+
+		private static bool IsScrollBarChild(DependencyObject o)
+		{
+			DependencyObject parent = o;
+
+			while (parent != null)
+			{
+				if (parent is ScrollBar)
+					return true;
+
+				parent = VisualTreeHelper.GetParent(parent);
+			}
+
+			return false;
+		}
+
+		#endregion
+
+		#region Event Handlers
 
 		void source_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
 		{
@@ -61,64 +85,51 @@ namespace MoonPdfLib
 			}
 			*/
 
-            if( IsScrollBarChild(e.OriginalSource as DependencyObject) ) // if the mouse click comes from the scrollbar, then we do not scroll
-				lastMouseDownLocation = null;
+			if (IsScrollBarChild(e.OriginalSource as DependencyObject)) // if the mouse click comes from the scrollbar, then we do not scroll
+			{
+				_lastMouseDownLocation = null;
+			}
 			else
 			{
-				if (this.source.ScrollViewer != null)
+				if (_source.ScrollViewer != null)
 				{
-					this.mouseHookListener.Enabled = true;
+					_mouseHookListener.Enabled = true;
 
-					lastMouseDownVerticalOffset = this.source.ScrollViewer.VerticalOffset;
-					lastMouseDownHorizontalOffset = this.source.ScrollViewer.HorizontalOffset;
-					lastMouseDownLocation = this.source.PointToScreen(e.GetPosition(this.source));
+					_lastMouseDownVerticalOffset = _source.ScrollViewer.VerticalOffset;
+					_lastMouseDownHorizontalOffset = _source.ScrollViewer.HorizontalOffset;
+					_lastMouseDownLocation = _source.PointToScreen(e.GetPosition(this._source));
 				}
 			}
 		}
 
-        private static bool IsScrollBarChild(DependencyObject o)
-        {
-            DependencyObject parent = o;
-
-            while(parent != null)
-            {
-                if (parent is ScrollBar)
-                    return true;
-
-                parent = VisualTreeHelper.GetParent(parent);
-            }
-
-            return false;
-        }
-
 		void source_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
 		{
-			var ctrlDown = Keyboard.IsKeyDown(Key.LeftCtrl) || Keyboard.IsKeyDown(Key.RightCtrl);
+			var ctrlDown = System.Windows.Input.Keyboard.IsKeyDown(Key.LeftCtrl) || System.Windows.Input.Keyboard.IsKeyDown(Key.RightCtrl);
 
 			if (ctrlDown || e.RightButton == MouseButtonState.Pressed)
 			{
 				if (e.Delta > 0)
-					this.source.ZoomIn();
+					_source.ZoomIn();
 				else
-					this.source.ZoomOut();
+					_source.ZoomOut();
 
 				e.Handled = true;
 			}
-			else if (!ctrlDown && (this.source.ScrollViewer == null || this.source.ScrollViewer.ComputedVerticalScrollBarVisibility != Visibility.Visible) && this.source.PageRowDisplay == PageRowDisplayType.SinglePageRow)
+			else if (!ctrlDown && (_source.ScrollViewer == null || _source.ScrollViewer.ComputedVerticalScrollBarVisibility != Visibility.Visible) && _source.PageRowDisplay == PageRowDisplayType.SinglePageRow)
 			{
 				if (e.Delta > 0)
-					this.source.GotoPreviousPage();
+					_source.GotoPreviousPage();
 				else
-					this.source.GotoNextPage();
+					_source.GotoNextPage();
 
 				e.Handled = true;
 			}
-			else if (this.source.ScrollViewer != null && (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift)))
+			else if (_source.ScrollViewer != null && (System.Windows.Input.Keyboard.IsKeyDown(Key.LeftShift) || System.Windows.Input.Keyboard.IsKeyDown(Key.RightShift)))
 			{
 				if (e.Delta > 0)
-					this.source.ScrollViewer.LineLeft();
+					_source.ScrollViewer.LineLeft();
 				else
-					this.source.ScrollViewer.LineRight();
+					_source.ScrollViewer.LineRight();
 
 				e.Handled = true;
 			}
@@ -127,57 +138,59 @@ namespace MoonPdfLib
 		void source_PreviewKeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.Key == Key.Home)
-				this.source.GotoPage(1);
+				_source.GotoPage(1);
 			else if (e.Key == Key.End)
-				this.source.GotoLastPage();
+				_source.GotoLastPage();
 			else if (e.Key == Key.Add || e.Key == Key.OemPlus)
-				this.source.ZoomIn();
+				_source.ZoomIn();
 			else if (e.Key == Key.Subtract || e.Key == Key.OemMinus)
-				this.source.ZoomOut();
+				_source.ZoomOut();
 
-			if (this.source.ScrollViewer != null && this.source.ScrollViewer.ComputedHorizontalScrollBarVisibility == System.Windows.Visibility.Visible)
+			if (_source.ScrollViewer != null && _source.ScrollViewer.ComputedHorizontalScrollBarVisibility == Visibility.Visible)
 				return;
 
 			if (e.Key == Key.Left)
-				this.source.GotoPreviousPage();
+				_source.GotoPreviousPage();
 			else if (e.Key == Key.Right)
-				this.source.GotoNextPage();
+				_source.GotoNextPage();
 		}
 
 		void mouseHookListener_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
-			this.mouseHookListener.Enabled = false;
-			this.lastMouseDownLocation = null;
+			_mouseHookListener.Enabled = false;
+			_lastMouseDownLocation = null;
 		}
 
 		void mouseHookListener_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
 		{
-			if (lastMouseDownLocation != null)
+			if (_lastMouseDownLocation != null)
 			{
 				var currentPos = e.Location;
-                var proposedYOffset = lastMouseDownVerticalOffset + lastMouseDownLocation.Value.Y - currentPos.Y;
-                var proposedXOffset = lastMouseDownHorizontalOffset + lastMouseDownLocation.Value.X - currentPos.X;
+                var proposedYOffset = _lastMouseDownVerticalOffset + _lastMouseDownLocation.Value.Y - currentPos.Y;
+                var proposedXOffset = _lastMouseDownHorizontalOffset + _lastMouseDownLocation.Value.X - currentPos.X;
 
-                if (proposedYOffset <= 0 || proposedYOffset > this.source.ScrollViewer.ScrollableHeight)
+                if (proposedYOffset <= 0 || proposedYOffset > _source.ScrollViewer.ScrollableHeight)
                 {
-                    lastMouseDownVerticalOffset = proposedYOffset <= 0 ? 0 : this.source.ScrollViewer.ScrollableHeight;
-                    lastMouseDownLocation = new Point(lastMouseDownLocation.Value.X, e.Y);
+                    _lastMouseDownVerticalOffset = proposedYOffset <= 0 ? 0 : _source.ScrollViewer.ScrollableHeight;
+                    _lastMouseDownLocation = new System.Windows.Point(_lastMouseDownLocation.Value.X, e.Y);
 
-                    proposedYOffset = lastMouseDownVerticalOffset + lastMouseDownLocation.Value.Y - currentPos.Y;
+                    proposedYOffset = _lastMouseDownVerticalOffset + _lastMouseDownLocation.Value.Y - currentPos.Y;
                 }
 
-                this.source.ScrollViewer.ScrollToVerticalOffset(proposedYOffset);
+                _source.ScrollViewer.ScrollToVerticalOffset(proposedYOffset);
 
                 
-                if (proposedXOffset <= 0 || proposedXOffset > this.source.ScrollViewer.ScrollableWidth)
+                if (proposedXOffset <= 0 || proposedXOffset > _source.ScrollViewer.ScrollableWidth)
                 {
-                    lastMouseDownHorizontalOffset = proposedXOffset <= 0 ? 0 : this.source.ScrollViewer.ScrollableWidth;
-                    lastMouseDownLocation = new Point(e.X, lastMouseDownLocation.Value.Y);
-                    proposedXOffset = lastMouseDownHorizontalOffset + lastMouseDownLocation.Value.X - currentPos.X;
+                    _lastMouseDownHorizontalOffset = proposedXOffset <= 0 ? 0 : _source.ScrollViewer.ScrollableWidth;
+                    _lastMouseDownLocation = new System.Windows.Point(e.X, _lastMouseDownLocation.Value.Y);
+                    proposedXOffset = _lastMouseDownHorizontalOffset + _lastMouseDownLocation.Value.X - currentPos.X;
                 }
 
-                this.source.ScrollViewer.ScrollToHorizontalOffset(proposedXOffset);   
+                _source.ScrollViewer.ScrollToHorizontalOffset(proposedXOffset);   
 			}
 		}
+
+		#endregion
 	}
 }

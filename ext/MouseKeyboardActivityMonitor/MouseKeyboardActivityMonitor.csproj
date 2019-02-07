@@ -183,31 +183,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Controls\HookType.cs" />
-    <Compile Include="Controls\MouseKeyEventProvider.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="BaseHookListener.cs" />
-    <Compile Include="KeyPressEventArgsExt.cs" />
-    <Compile Include="WinApi\Mouse.cs" />
-    <Compile Include="MouseHookListener.cs" />
-    <Compile Include="WinApi\AppHooker.cs" />
-    <Compile Include="WinApi\GlobalHooker.cs" />
-    <Compile Include="WinApi\MouseStructures.cs" />
-    <Compile Include="WinApi\KeyboardHookStruct.cs" />
-    <Compile Include="KeyEventArgsExt.cs" />
-    <Compile Include="WinApi\Point.cs" />
-    <Compile Include="WinApi\HookCallback.cs" />
-    <Compile Include="KeyboardHookListener.cs" />
-    <Compile Include="MouseEventExtArgs.cs" />
-    <Compile Include="WinApi\Hooker.cs" />
-    <Compile Include="WinApi\Keyboard.cs" />
-    <Compile Include="WinApi\Messages.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
       <Visible>False</Visible>
       <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>

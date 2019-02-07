@@ -14,149 +14,300 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*/
+using MoonPdfLib.Helper;
+using MoonPdfLib.MuPdf;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using MoonPdfLib.MuPdf;
-using MoonPdfLib.Helper;
 using System.Windows.Threading;
-using System.ComponentModel;
 
 namespace MoonPdfLib
 {
 	public partial class MoonPdfPanel : UserControl
 	{
+		#region Events
+
 		public event EventHandler PdfLoaded;
 		public event EventHandler ZoomTypeChanged;
 		public event EventHandler ViewTypeChanged;
 		public event EventHandler PageRowDisplayChanged;
-        public event EventHandler<PasswordRequiredEventArgs> PasswordRequired;
+		public event EventHandler<PasswordRequiredEventArgs> PasswordRequired;
 
-		private ZoomType zoomType = ZoomType.Fixed;
-		private IMoonPdfPanel innerPanel;
-		private MoonPdfPanelInputHandler inputHandler;
-		private PageRowBound[] pageRowBounds;
-		private DispatcherTimer resizeTimer;
+		#endregion
 
-		#region Dependency properties
-		public static readonly DependencyProperty PageMarginProperty = DependencyProperty.Register("PageMargin", typeof(Thickness),
-																			typeof(MoonPdfPanel), new FrameworkPropertyMetadata(new Thickness(0, 2, 4, 2)));
+		#region Fields
 
-		public static readonly DependencyProperty ZoomStepProperty = DependencyProperty.Register("ZoomStep", typeof(double),
-																			typeof(MoonPdfPanel), new FrameworkPropertyMetadata(0.25));
+		private ZoomType _zoomType = ZoomType.Fixed;
+		private IMoonPdfPanel _innerPanel;
+		private MoonPdfPanelInputHandler _inputHandler;
+		private PageRowBound[] _pageRowBounds;
+		private DispatcherTimer _resizeTimer;
 
-		public static readonly DependencyProperty MinZoomFactorProperty = DependencyProperty.Register("MinZoomFactor", typeof(double),
-																			typeof(MoonPdfPanel), new FrameworkPropertyMetadata(0.15));
+		#endregion
 
-		public static readonly DependencyProperty MaxZoomFactorProperty = DependencyProperty.Register("MaxZoomFactor", typeof(double),
-																			typeof(MoonPdfPanel), new FrameworkPropertyMetadata(6.0));
+		#region Dependency Properties
 
-		public static readonly DependencyProperty ViewTypeProperty = DependencyProperty.Register("ViewType", typeof(ViewType),
-																			typeof(MoonPdfPanel), new FrameworkPropertyMetadata(MoonPdfLib.ViewType.SinglePage));
+		#region Page Margin
 
-		public static readonly DependencyProperty RotationProperty = DependencyProperty.Register("Rotation", typeof(ImageRotation),
-																			typeof(MoonPdfPanel), new FrameworkPropertyMetadata(ImageRotation.None));
+		public static readonly DependencyProperty PageMarginProperty = DependencyProperty.Register(nameof(PageMargin), typeof(Thickness), typeof(MoonPdfPanel), new FrameworkPropertyMetadata(new Thickness(0, 2, 4, 2)));
 
-		public static readonly DependencyProperty PageRowDisplayProperty = DependencyProperty.Register("PageRowDisplay", typeof(PageRowDisplayType),
-																			typeof(MoonPdfPanel), new FrameworkPropertyMetadata(PageRowDisplayType.SinglePageRow));
-		
 		public Thickness PageMargin
 		{
-			get { return (Thickness)GetValue(PageMarginProperty); }
-			set { SetValue(PageMarginProperty, value); }
+			get
+			{
+				return (Thickness)GetValue(PageMarginProperty);
+			}
+			set
+			{
+				SetValue(PageMarginProperty, value);
+			}
 		}
+
+		#endregion
+
+		#region ZoomStep
+
+		public static readonly DependencyProperty ZoomStepProperty = DependencyProperty.Register(nameof(ZoomStep), typeof(double), typeof(MoonPdfPanel), new FrameworkPropertyMetadata(0.25));
 
 		public double ZoomStep
 		{
-			get { return (double)GetValue(ZoomStepProperty); }
-			set { SetValue(ZoomStepProperty, value); }
+			get
+			{
+				return (double)GetValue(ZoomStepProperty);
+			}
+			set
+			{
+				SetValue(ZoomStepProperty, value);
+			}
 		}
+
+		#endregion
+
+		#region MinZoomFactor
+
+		public static readonly DependencyProperty MinZoomFactorProperty = DependencyProperty.Register(nameof(MinZoomFactor), typeof(double), typeof(MoonPdfPanel), new FrameworkPropertyMetadata(0.15));
 
 		public double MinZoomFactor
 		{
-			get { return (double)GetValue(MinZoomFactorProperty); }
-			set { SetValue(MinZoomFactorProperty, value); }
+			get
+			{
+				return (double)GetValue(MinZoomFactorProperty);
+			}
+			set
+			{
+				SetValue(MinZoomFactorProperty, value);
+			}
 		}
+
+		#endregion
+
+		#region MaxZoomFactor
+
+		public static readonly DependencyProperty MaxZoomFactorProperty = DependencyProperty.Register(nameof(MaxZoomFactor), typeof(double), typeof(MoonPdfPanel), new FrameworkPropertyMetadata(6.0));
 
 		public double MaxZoomFactor
 		{
-			get { return (double)GetValue(MaxZoomFactorProperty); }
-			set { SetValue(MaxZoomFactorProperty, value); }
+			get
+			{
+				return (double)GetValue(MaxZoomFactorProperty);
+			}
+			set
+			{
+				SetValue(MaxZoomFactorProperty, value);
+			}
 		}
 
-		public MoonPdfLib.ViewType ViewType
+		#endregion
+
+		#region ViewType
+
+		public static readonly DependencyProperty ViewTypeProperty = DependencyProperty.Register(nameof(ViewType), typeof(ViewType), typeof(MoonPdfPanel), new FrameworkPropertyMetadata(MoonPdfLib.ViewType.SinglePage));
+
+		public ViewType ViewType
 		{
-			get { return (MoonPdfLib.ViewType)GetValue(ViewTypeProperty); }
-			set { SetValue(ViewTypeProperty, value); }
+			get
+			{
+				return (ViewType)GetValue(ViewTypeProperty);
+			}
+			set
+			{
+				SetValue(ViewTypeProperty, value);
+			}
 		}
-				
+
+		#endregion
+
+		#region Rotation
+
+		public static readonly DependencyProperty RotationProperty = DependencyProperty.Register(nameof(Rotation), typeof(ImageRotation), typeof(MoonPdfPanel), new FrameworkPropertyMetadata(ImageRotation.None));
+
 		public ImageRotation Rotation
 		{
-			get { return (ImageRotation)GetValue(RotationProperty); }
-			set { SetValue(RotationProperty, value); }
+			get
+			{
+				return (ImageRotation)GetValue(RotationProperty);
+			}
+			set
+			{
+				SetValue(RotationProperty, value);
+			}
 		}
+
+		#endregion
+
+		#region PageRowDisplay
+
+		public static readonly DependencyProperty PageRowDisplayProperty = DependencyProperty.Register(nameof(PageRowDisplay), typeof(PageRowDisplayType), typeof(MoonPdfPanel), new FrameworkPropertyMetadata(PageRowDisplayType.SinglePageRow));
 
 		public PageRowDisplayType PageRowDisplay
 		{
-			get { return (PageRowDisplayType)GetValue(PageRowDisplayProperty); }
-			set { SetValue(PageRowDisplayProperty, value); }
+			get
+			{
+				return (PageRowDisplayType)GetValue(PageRowDisplayProperty);
+			}
+			set
+			{
+				SetValue(PageRowDisplayProperty, value);
+			}
 		}
+
 		#endregion
 
-		public double HorizontalMargin { get { return this.PageMargin.Right; } }
-        public IPdfSource CurrentSource { get; private set; }
-        public string CurrentPassword { get; private set; }
+		#region CurrentZoom
+
+		public static readonly DependencyProperty CurrentZoomProperty = DependencyProperty.Register(nameof(CurrentZoom), typeof(double), typeof(MoonPdfPanel), new FrameworkPropertyMetadata(1.0, OnCurrentZoomChanged));
+
+		public double CurrentZoom
+		{
+			get
+			{
+				return (double)GetValue(CurrentZoomProperty);
+			}
+			set
+			{
+				SetValue(CurrentZoomProperty, value);
+			}
+		}
+
+		private static void OnCurrentZoomChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+		{
+			var panel = sender as MoonPdfPanel;
+			if (panel == null)
+			{
+				return;
+			}
+
+			panel._innerPanel.Zoom(Convert.ToDouble(e.NewValue));
+			panel.ZoomType = ZoomType.Fixed;
+		}
+
+		#endregion
+
+		#region CurrentPage
+
+		public static readonly DependencyProperty CurrentPageProperty = DependencyProperty.Register(nameof(CurrentPage), typeof(int), typeof(MoonPdfPanel), new FrameworkPropertyMetadata(1, OnCurrentPageChanged));
+
+		public int CurrentPage
+		{
+			get
+			{
+				return (int)GetValue(CurrentPageProperty);
+			}
+			set
+			{
+				SetValue(CurrentPageProperty, value);
+			}
+		}
+
+		private static void OnCurrentPageChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+		{
+			var panel = sender as MoonPdfPanel;
+			if (panel == null)
+			{
+				return;
+			}
+
+			var newValue = Convert.ToInt32(e.NewValue);
+			if (newValue < 1)
+			{
+				newValue = 1;
+			}
+			else if (newValue > panel.TotalPages)
+			{
+				newValue = panel.TotalPages;
+			}
+			panel._innerPanel.GotoPage(newValue);
+		}
+
+		#endregion
+
+		#endregion
+
+		public double HorizontalMargin
+		{
+			get
+			{
+				return PageMargin.Right;
+			}
+		}
+
+		public IPdfSource CurrentSource { get; private set; }
+		public string CurrentPassword { get; private set; }
 		public int TotalPages { get; private set; }
-		internal PageRowBound[] PageRowBounds { get { return this.pageRowBounds; } }
+
+		internal PageRowBound[] PageRowBounds
+		{
+			get
+			{
+				return _pageRowBounds;
+			}
+		}
 
 		public ZoomType ZoomType
 		{
-			get { return this.zoomType; }
+			get
+			{
+				return _zoomType;
+			}
 			private set
 			{
-				if (this.zoomType != value)
+				if (_zoomType != value)
 				{
-					this.zoomType = value;
+					_zoomType = value;
 
-					if (ZoomTypeChanged != null)
-						ZoomTypeChanged(this, EventArgs.Empty);
+					ZoomTypeChanged?.Invoke(this, EventArgs.Empty);
 				}
 			}
 		}
 
 		internal ScrollViewer ScrollViewer
 		{
-			get { return this.innerPanel.ScrollViewer; }
+			get
+			{
+				return _innerPanel.ScrollViewer;
+			}
 		}
 
-		public float CurrentZoom
-		{
-			get { return this.innerPanel.CurrentZoom; }
-		}
+		//public float CurrentZoom
+		//{
+		//	get { return this._innerPanel.CurrentZoom; }
+		//}
 
 		public MoonPdfPanel()
 		{
 			InitializeComponent();
 
-			this.ChangeDisplayType(this.PageRowDisplay);
-			this.inputHandler = new MoonPdfPanelInputHandler(this);
+			ChangeDisplayType(PageRowDisplay);
+			_inputHandler = new MoonPdfPanelInputHandler(this);
 
-			this.SizeChanged += PdfViewerPanel_SizeChanged;
+			SizeChanged += PdfViewerPanel_SizeChanged;
 
-			resizeTimer = new DispatcherTimer();
-			resizeTimer.Interval = TimeSpan.FromMilliseconds(150);
-			resizeTimer.Tick += resizeTimer_Tick;
+			_resizeTimer = new DispatcherTimer();
+			_resizeTimer.Interval = TimeSpan.FromMilliseconds(150);
+			_resizeTimer.Tick += resizeTimer_Tick;
 		}
 
 		void PdfViewerPanel_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -164,13 +315,13 @@ namespace MoonPdfLib
 			if (this.CurrentSource == null)
 				return;
 
-			resizeTimer.Stop();
-			resizeTimer.Start();
+			_resizeTimer.Stop();
+			_resizeTimer.Start();
 		}
 
 		void resizeTimer_Tick(object sender, EventArgs e)
 		{
-			resizeTimer.Stop();
+			_resizeTimer.Stop();
 
 			if (this.CurrentSource == null)
 				return;
@@ -181,74 +332,73 @@ namespace MoonPdfLib
 				ZoomToHeight();
 		}
 
-        public void OpenFile(string pdfFilename, string password = null)
-        {
-            if (!File.Exists(pdfFilename))
-                throw new FileNotFoundException(string.Empty, pdfFilename);
+		public void OpenFile(string pdfFilename, string password = null)
+		{
+			if (!File.Exists(pdfFilename))
+				throw new FileNotFoundException(string.Empty, pdfFilename);
 
-            this.Open(new FileSource(pdfFilename), password);
-        }
+			this.Open(new FileSource(pdfFilename), password);
+		}
 
 		public void Open(IPdfSource source, string password = null)
 		{
-            var pw = password;
+			var pw = password;
 
-            if (this.PasswordRequired != null && MuPdfWrapper.NeedsPassword(source) && pw == null)
-            {
-                var e = new PasswordRequiredEventArgs();
-                this.PasswordRequired(this, e);
+			if (PasswordRequired != null && MuPdfWrapper.NeedsPassword(source) && pw == null)
+			{
+				var e = new PasswordRequiredEventArgs();
+				PasswordRequired(this, e);
 
-                if (e.Cancel)
-                    return;
+				if (e.Cancel)
+					return;
 
-                pw = e.Password;
-            }
+				pw = e.Password;
+			}
 
-            this.LoadPdf(source, pw);
-			this.CurrentSource = source;
-            this.CurrentPassword = pw;
+			LoadPdf(source, pw);
+			CurrentSource = source;
+			CurrentPassword = pw;
+			CurrentPage = 1;
 
-			if (this.PdfLoaded != null)
-				this.PdfLoaded(this, EventArgs.Empty);
+			PdfLoaded?.Invoke(this, EventArgs.Empty);
 		}
 
-        public void Unload()
-        {
-            this.CurrentSource = null;
-            this.CurrentPassword = null;
-            this.TotalPages = 0;
+		public void Unload()
+		{
+			CurrentSource = null;
+			CurrentPassword = null;
+			TotalPages = 0;
 
-            this.innerPanel.Unload();
+			_innerPanel.Unload();
 
-            if (this.PdfLoaded != null)
-                this.PdfLoaded(this, EventArgs.Empty);
-        }
+			PdfLoaded?.Invoke(this, EventArgs.Empty);
+		}
 
-        private void LoadPdf(IPdfSource source, string password)
-        {
-            var pageBounds = MuPdfWrapper.GetPageBounds(source, this.Rotation, password);
-            this.pageRowBounds = CalculatePageRowBounds(pageBounds, this.ViewType);
-            this.TotalPages = pageBounds.Length;
-            this.innerPanel.Load(source, password);
-        }
+		private void LoadPdf(IPdfSource source, string password)
+		{
+			var pageBounds = MuPdfWrapper.GetPageBounds(source, Rotation, password);
+			_pageRowBounds = CalculatePageRowBounds(pageBounds, ViewType);
+			TotalPages = pageBounds.Length;
+			_innerPanel.Load(source, password);
+		}
 
 		private PageRowBound[] CalculatePageRowBounds(Size[] singlePageBounds, ViewType viewType)
 		{
 			var pagesPerRow = Math.Min(GetPagesPerRow(), singlePageBounds.Length); // if multiple page-view, but pdf contains less pages than the pages per row
 			var finalBounds = new List<PageRowBound>();
-			var verticalBorderOffset = (this.PageMargin.Top + this.PageMargin.Bottom);
+			var verticalBorderOffset = PageMargin.Top + PageMargin.Bottom;
 
-			if (viewType == MoonPdfLib.ViewType.SinglePage)
+			if (viewType == ViewType.SinglePage)
 			{
-				finalBounds.AddRange(singlePageBounds.Select(p => new PageRowBound( p, verticalBorderOffset, 0)));
+				finalBounds.AddRange(singlePageBounds.Select(p => new PageRowBound(p, verticalBorderOffset, 0)));
 			}
 			else
 			{
-				var horizontalBorderOffset = this.HorizontalMargin;
+				var horizontalBorderOffset = HorizontalMargin;
 
 				for (int i = 0; i < singlePageBounds.Length; i++)
 				{
-					if (i == 0 && viewType == MoonPdfLib.ViewType.BookView)
+					if (i == 0 && viewType == ViewType.BookView)
 					{
 						finalBounds.Add(new PageRowBound(singlePageBounds[0], verticalBorderOffset, 0));
 						continue;
@@ -267,126 +417,132 @@ namespace MoonPdfLib
 
 		internal int GetPagesPerRow()
 		{
-			return this.ViewType == MoonPdfLib.ViewType.SinglePage ? 1 : 2;
+			return ViewType == ViewType.SinglePage ? 1 : 2;
 		}
 
 		public int GetCurrentPageNumber()
 		{
-			if (this.innerPanel == null)
+			if (_innerPanel == null)
 				return -1;
 
-			return this.innerPanel.GetCurrentPageIndex(this.ViewType) + 1;
+			return _innerPanel.GetCurrentPageIndex(ViewType) + 1;
 		}
 
 		public void ZoomToWidth()
 		{
-			this.innerPanel.ZoomToWidth();
-			this.ZoomType = MoonPdfLib.ZoomType.FitToWidth;
+			_innerPanel.ZoomToWidth();
+			ZoomType = ZoomType.FitToWidth;
+			CurrentZoom = _innerPanel.CurrentZoom;
 		}
 
 		public void ZoomToHeight()
 		{
-			this.innerPanel.ZoomToHeight();
-			this.ZoomType = ZoomType.FitToHeight;
+			_innerPanel.ZoomToHeight();
+			ZoomType = ZoomType.FitToHeight;
+			CurrentZoom = _innerPanel.CurrentZoom;
 		}
 
 		public void ZoomIn()
 		{
-            this.innerPanel.ZoomIn();
-			this.ZoomType = ZoomType.Fixed;
+			_innerPanel.ZoomIn();
+			ZoomType = ZoomType.Fixed;
+			CurrentZoom = _innerPanel.CurrentZoom;
 		}
 
 		public void ZoomOut()
 		{
-            this.innerPanel.ZoomOut();
-			this.ZoomType = ZoomType.Fixed;
+			_innerPanel.ZoomOut();
+			ZoomType = ZoomType.Fixed;
+			CurrentZoom = _innerPanel.CurrentZoom;
 		}
 
 		public void Zoom(double zoomFactor)
 		{
-            this.innerPanel.Zoom(zoomFactor);
-			this.ZoomType = ZoomType.Fixed;
+			CurrentZoom = zoomFactor;
+			//_innerPanel.Zoom(zoomFactor);
+			//ZoomType = ZoomType.Fixed;
 		}
 
-        /// <summary>
-        /// Sets the ZoomType back to Fixed
-        /// </summary>
+		/// <summary>
+		/// Sets the ZoomType back to Fixed
+		/// </summary>
 		public void SetFixedZoom()
 		{
-			this.ZoomType = MoonPdfLib.ZoomType.Fixed;
+			ZoomType = ZoomType.Fixed;
 		}
 
 		public void GotoPreviousPage()
 		{
-			this.innerPanel.GotoPreviousPage();
+			_innerPanel.GotoPreviousPage();
+			CurrentPage = GetCurrentPageNumber();
 		}
 
 		public void GotoNextPage()
 		{
-			this.innerPanel.GotoNextPage();
+			_innerPanel.GotoNextPage();
+			CurrentPage = GetCurrentPageNumber();
 		}
 
 		public void GotoPage(int pageNumber)
 		{
-			this.innerPanel.GotoPage(pageNumber);
+			CurrentPage = pageNumber;
 		}
 
 		public void GotoFirstPage()
 		{
-			this.GotoPage(1);
+			GotoPage(1);
 		}
 
 		public void GotoLastPage()
 		{
-			this.GotoPage(this.TotalPages);
+			GotoPage(TotalPages);
 		}
 
 		public void RotateRight()
 		{
-			if (this.Rotation != ImageRotation.Rotate270)
-				this.Rotation = (ImageRotation)this.Rotation + 1;
+			if (Rotation != ImageRotation.Rotate270)
+				Rotation = (ImageRotation)Rotation + 1;
 			else
-				this.Rotation = ImageRotation.None;
+				Rotation = ImageRotation.None;
 		}
 
 		public void RotateLeft()
 		{
-			if ((int)this.Rotation > 0)
-				this.Rotation = (ImageRotation)this.Rotation -1;
+			if ((int)Rotation > 0)
+				Rotation = (ImageRotation)Rotation - 1;
 			else
-				this.Rotation = ImageRotation.Rotate270;
+				Rotation = ImageRotation.Rotate270;
 		}
 
 		public void Rotate(ImageRotation rotation)
 		{
-			var currentPage = this.innerPanel.GetCurrentPageIndex(this.ViewType) + 1;
-			this.LoadPdf(this.CurrentSource, this.CurrentPassword);
-			this.innerPanel.GotoPage(currentPage);
+			var currentPage = _innerPanel.GetCurrentPageIndex(ViewType) + 1;
+			LoadPdf(CurrentSource, CurrentPassword);
+			_innerPanel.GotoPage(currentPage);
 		}
 
 		public void TogglePageDisplay()
 		{
-			this.PageRowDisplay = (this.PageRowDisplay == PageRowDisplayType.SinglePageRow) ? PageRowDisplayType.ContinuousPageRows : PageRowDisplayType.SinglePageRow;
+			PageRowDisplay = (PageRowDisplay == PageRowDisplayType.SinglePageRow) ? PageRowDisplayType.ContinuousPageRows : PageRowDisplayType.SinglePageRow;
 		}
 
 		protected override void OnPropertyChanged(DependencyPropertyChangedEventArgs e)
 		{
 			base.OnPropertyChanged(e);
 
-            if (e.Property.Name.Equals("PageRowDisplay"))
+			if (e.Property.Name.Equals("PageRowDisplay"))
 				ChangeDisplayType((PageRowDisplayType)e.NewValue);
 			else if (e.Property.Name.Equals("Rotation"))
-				this.Rotate((ImageRotation)e.NewValue);
+				Rotate((ImageRotation)e.NewValue);
 			else if (e.Property.Name.Equals("ViewType"))
-				this.ApplyChangedViewType((ViewType)e.OldValue);
+				ApplyChangedViewType((ViewType)e.OldValue);
 		}
 
 		private void ApplyChangedViewType(ViewType oldViewType)
 		{
-			UpdateAndReload(() => {}, oldViewType);
+			UpdateAndReload(() => { }, oldViewType);
 
-			if (this.ViewTypeChanged != null)
-				this.ViewTypeChanged(this, EventArgs.Empty);
+			ViewTypeChanged?.Invoke(this, EventArgs.Empty);
 		}
 
 		private void ChangeDisplayType(PageRowDisplayType pageRowDisplayType)
@@ -394,18 +550,17 @@ namespace MoonPdfLib
 			UpdateAndReload(() =>
 				{
 					// we need to remove the current innerPanel
-					this.pnlMain.Children.Clear();
+					pnlMain.Children.Clear();
 
 					if (pageRowDisplayType == PageRowDisplayType.SinglePageRow)
-						this.innerPanel = new SinglePageMoonPdfPanel(this);
+						_innerPanel = new SinglePageMoonPdfPanel(this);
 					else
-						this.innerPanel = new ContinuousMoonPdfPanel(this);
+						_innerPanel = new ContinuousMoonPdfPanel(this);
 
-					this.pnlMain.Children.Add(this.innerPanel.Instance);
-				}, this.ViewType);
+					pnlMain.Children.Add(_innerPanel.Instance);
+				}, ViewType);
 
-			if (this.PageRowDisplayChanged != null)
-				this.PageRowDisplayChanged(this, EventArgs.Empty);
+			PageRowDisplayChanged?.Invoke(this, EventArgs.Empty);
 		}
 
 		private void UpdateAndReload(Action updateAction, ViewType viewType)
@@ -413,10 +568,10 @@ namespace MoonPdfLib
 			var currentPage = -1;
 			var zoom = 1.0f;
 
-			if (this.CurrentSource != null)
+			if (CurrentSource != null)
 			{
-				currentPage = this.innerPanel.GetCurrentPageIndex(viewType) + 1;
-				zoom = this.innerPanel.CurrentZoom;
+				currentPage = _innerPanel.GetCurrentPageIndex(viewType) + 1;
+				zoom = _innerPanel.CurrentZoom;
 			}
 
 			updateAction();
@@ -425,17 +580,17 @@ namespace MoonPdfLib
 			{
 				Action reloadAction = () =>
 					{
-                        this.LoadPdf(this.CurrentSource, this.CurrentPassword);
-						this.innerPanel.Zoom(zoom);
-						this.innerPanel.GotoPage(currentPage);
+						LoadPdf(CurrentSource, CurrentPassword);
+						_innerPanel.Zoom(zoom);
+						_innerPanel.GotoPage(currentPage);
 					};
 
-				if (this.innerPanel.Instance.IsLoaded)
+				if (_innerPanel.Instance.IsLoaded)
 					reloadAction();
 				else
 				{
 					// we need to wait until the controls are loaded and then reload the pdf
-					this.innerPanel.Instance.Loaded += (s, e) => { reloadAction();	};
+					_innerPanel.Instance.Loaded += (s, e) => { reloadAction(); };
 				}
 			}
 		}
@@ -453,40 +608,40 @@ namespace MoonPdfLib
 				var filenames = (string[])e.Data.GetData(DataFormats.FileDrop);
 				var filename = filenames.FirstOrDefault();
 
-                if (filename != null && File.Exists(filename))
-                {
-                    string pw = null;
+				if (filename != null && File.Exists(filename))
+				{
+					string pw = null;
 
-                    if (MuPdfWrapper.NeedsPassword(new FileSource(filename)))
-                    {
-                        if (this.PasswordRequired == null)
-                            return;
+					if (MuPdfWrapper.NeedsPassword(new FileSource(filename)))
+					{
+						if (PasswordRequired == null)
+							return;
 
-                        var args = new PasswordRequiredEventArgs();
-                        this.PasswordRequired(this, args);
+						var args = new PasswordRequiredEventArgs();
+						PasswordRequired(this, args);
 
-                        if (args.Cancel)
-                            return;
+						if (args.Cancel)
+							return;
 
-                        pw = args.Password;
-                    }
-                    
-                    try
-                    {
-                        this.OpenFile(filename, pw);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show(string.Format("An error occured: " + ex.Message));
-                    }
-                }
+						pw = args.Password;
+					}
+
+					try
+					{
+						OpenFile(filename, pw);
+					}
+					catch (Exception ex)
+					{
+						MessageBox.Show(string.Format("An error occured: " + ex.Message));
+					}
+				}
 			}
 		}
 	}
 
-    public class PasswordRequiredEventArgs : EventArgs
-    {
-        public string Password { get; set; }
-        public bool Cancel { get; set; }
-    }
+	public class PasswordRequiredEventArgs : EventArgs
+	{
+		public string Password { get; set; }
+		public bool Cancel { get; set; }
+	}
 }

@@ -11,6 +11,10 @@
     <AssemblyName>MoonPdfLib</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -99,6 +103,17 @@
       <DependentUpon>MoonPdfPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="MoonPdfPanelInputHandler.cs" />
+    <Compile Include="MouseKeyboardActivityMonitor\Controls\HookType.cs" />
+    <Compile Include="MouseKeyboardActivityMonitor\MouseEventExtArgs.cs" />
+    <Compile Include="MouseKeyboardActivityMonitor\MouseHookListener.cs" />
+    <Compile Include="MouseKeyboardActivityMonitor\WinApi\AppHooker.cs" />
+    <Compile Include="MouseKeyboardActivityMonitor\WinApi\GlobalHooker.cs" />
+    <Compile Include="MouseKeyboardActivityMonitor\WinApi\HookCallback.cs" />
+    <Compile Include="MouseKeyboardActivityMonitor\WinApi\Hooker.cs" />
+    <Compile Include="MouseKeyboardActivityMonitor\WinApi\Messages.cs" />
+    <Compile Include="MouseKeyboardActivityMonitor\WinApi\Mouse.cs" />
+    <Compile Include="MouseKeyboardActivityMonitor\WinApi\MouseStructures.cs" />
+    <Compile Include="MouseKeyboardActivityMonitor\WinApi\Point.cs" />
     <Compile Include="MuPdf\MuPdfWrapper.cs" />
     <Compile Include="PageDisplaySettings.cs" />
     <Compile Include="PageRowDisplayType.cs" />
@@ -136,20 +151,19 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\ext\MouseKeyboardActivityMonitor\MouseKeyboardActivityMonitor.csproj">
-      <Project>{f52aa97e-180a-40ed-8f2b-09080171d6c7}</Project>
-      <Name>MouseKeyboardActivityMonitor</Name>
-    </ProjectReference>
+    <None Include="headertemplate.json" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="headertemplate.json" />
+    <None Include="libmupdf.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>xcopy $(SolutionDir)..\bin\MuLib\$(PlatformName)\libmupdf.dll $(TargetDir) /Y</PostBuildEvent>
+    <PostBuildEvent>REM xcopy $(SolutionDir)..\bin\MuLib\$(PlatformName)\libmupdf.dll $(TargetDir) /Y</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>$(SolutionDir)..\bin\HeaderLicensePrepend\HeaderLicensePrepend.exe $(ProjectDir)headertemplate.json</PreBuildEvent>
+    <PreBuildEvent>REM $(SolutionDir)..\bin\HeaderLicensePrepend\HeaderLicensePrepend.exe $(ProjectDir)headertemplate.json</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
