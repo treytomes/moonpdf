@@ -95,7 +95,11 @@ namespace MouseKeyboardActivityMonitor
 		/// </remarks>
 		public MouseHookListener(Hooker hooker)
 		{
-			_hooker = hooker ?? throw new ArgumentNullException("hooker");
+			if (hooker == null)
+			{
+				throw new ArgumentNullException(nameof(hooker));
+			}
+			_hooker = hooker;
 
 			_previousPosition = new Point(-1, -1);
             _previousClickedTime = 0;

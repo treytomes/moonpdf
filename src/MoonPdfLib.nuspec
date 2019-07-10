@@ -1,0 +1,75 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+
+	<!-- REQUIRED FIELDS: -->
+
+	<!-- Unique package identifier. -->
+	<id>MoonPdfLib</id>
+
+	<!-- Version number default. Should be overridden on the command line using the -version flag. -->
+	<version>1.1.0.0</version>
+
+	<!-- Whoever packaged the code. -->
+	<authors>Elliott Electric Supply, Trey Tomes</authors>
+
+	<description>
+	  $/GuiPrograms/Development/Shared/WPF/moonpdf
+
+	  WPF-based PDF viewer.
+	</description>
+
+	<!-- OPTIONAL FIELDS: -->
+
+	<!-- Whoever wrote the code; may be different from <authors> -->
+	<owners>Elliott Electric Supply, Trey Tomes</owners>
+
+	<projectUrl>http://tfs.elliottelectric.com/tfs/ElliottDefaultCollection/common/_versionControl?path=$/GuiPrograms/Development/Shared/WPF/moonpdf</projectUrl>
+	<iconUrl>http://www.elliottelectric.com/images/logos/AppLogo.png</iconUrl>
+
+	<!-- Tags appear in the gallery and can be used for tag searches -->
+	<tags>elliott ees pdf</tags>
+
+	<!-- Dependencies are automatically installed when the package is installed. -->
+	<!-- NOTE: This should match the packages.config file! When packing using a .nuspec these dependencies are NOT automatically carried over from packages.config. -->
+	<!--<dependencies>
+	  <dependency id="EES.ElliottData" />
+	  <dependency id="EES.Models" />
+	  <dependency id="EES.MVVM" />
+	  <dependency id="StructureMap" version="4.4.5" />
+	  <dependency id="System.Windows.Interactivity.WPF" version="2.0.20525" />
+	  <dependency id="MoonPdfLib-x86" version="0.3.0" />
+	</dependencies>-->
+
+	<!-- .NET assemblies your project requires in order to build. -->
+	<!-- These are not included in the NuGet package directly, only as references. -->
+	<frameworkAssemblies>
+	  <frameworkAssembly assemblyName="Microsoft.CSharp" />
+	  <frameworkAssembly assemblyName="PresentationCore" />
+	  <frameworkAssembly assemblyName="PresentationFramework" />
+	  <frameworkAssembly assemblyName="System" />
+	  <frameworkAssembly assemblyName="System.Core" />
+	  <frameworkAssembly assemblyName="System.Data" />
+	  <frameworkAssembly assemblyName="System.Data.DataSetExtensions" />
+	  <frameworkAssembly assemblyName="System.Drawing" />
+	  <frameworkAssembly assemblyName="System.Windows.Forms" />
+	  <frameworkAssembly assemblyName="System.Xaml" />
+	  <frameworkAssembly assemblyName="System.Xml" />
+	  <frameworkAssembly assemblyName="System.Xml.Linq" />
+	  <frameworkAssembly assemblyName="WindowsBase" />
+	</frameworkAssemblies>
+
+	<!--<contentFiles>
+	  <files include="**/*" buildAction="None" copyToOutput="true" flatten="true" />
+	</contentFiles>-->
+  </metadata>
+
+  <!-- Files to include; place assemblies in the lib directory, and static files such as readmes in the content directory. Wildcards work as expected. -->
+  <!-- Everything in the content directory will be copied to the project directory on install. -->
+  <!-- e.g. everything in content/css will be copied to the project's css directory; if the css directory doesn't exist, it is created.-->
+  <files>
+	<file src="MoonPdfLib/bin/$configuration$/libmupdf.dll" target="lib\net461" />
+	<file src="MoonPdfLib/bin/$configuration$/MoonPdfLib.dll" target="lib\net461" />
+	<file src="MoonPdfLib/bin/$configuration$/MoonPdfLib.dll.config" target="lib\net461" />
+  </files>
+</package>

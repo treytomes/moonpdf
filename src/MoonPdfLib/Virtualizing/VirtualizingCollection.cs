@@ -549,7 +549,7 @@ namespace MoonPdfLib.Virtualizing
 		/// <returns></returns>
 		protected int FetchCount()
 		{
-			return ItemsProvider.FetchCount();
+			return (ItemsProvider?.FetchCount()).GetValueOrDefault(0);
 		}
 
 		#endregion

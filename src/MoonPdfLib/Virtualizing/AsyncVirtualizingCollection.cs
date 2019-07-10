@@ -128,9 +128,7 @@ namespace MoonPdfLib.Virtualizing
 		/// <param name="e">The <see cref="System.ComponentModel.PropertyChangedEventArgs"/> instance containing the event data.</param>
 		protected virtual void OnPropertyChanged(PropertyChangedEventArgs e)
 		{
-			PropertyChangedEventHandler h = PropertyChanged;
-			if (h != null)
-				h(this, e);
+			PropertyChanged?.Invoke(this, e);
 		}
 
 		/// <summary>
@@ -139,8 +137,7 @@ namespace MoonPdfLib.Virtualizing
 		/// <param name="propertyName">Name of the property.</param>
 		private void FirePropertyChanged(string propertyName)
 		{
-			PropertyChangedEventArgs e = new PropertyChangedEventArgs(propertyName);
-			OnPropertyChanged(e);
+			OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
 		}
 
 		#endregion
@@ -166,7 +163,7 @@ namespace MoonPdfLib.Virtualizing
 				if (value != _isLoading)
 				{
 					_isLoading = value;
-					FirePropertyChanged("IsLoading");
+					FirePropertyChanged(nameof(IsLoading));
 				}
 			}
 		}

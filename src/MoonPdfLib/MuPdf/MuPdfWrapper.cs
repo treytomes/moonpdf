@@ -15,18 +15,14 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 !*/
 using MoonPdfLib.Helper;
+
 /*
  * 2013 - Modified and extended version of W. Jordan's code (see AUTHORS file)
  */
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace MoonPdfLib.MuPdf
 {
@@ -42,9 +38,9 @@ namespace MoonPdfLib.MuPdf
 		{
 			var pageNumberIndex = Math.Max(0, pageNumber - 1); // pages start at index 0
 
-            using (var stream = new PdfFileStream(source))
+			using (var stream = new PdfFileStream(source))
 			{
-                ValidatePassword(stream.Document, password);
+				ValidatePassword(stream.Document, password);
 
 				IntPtr p = NativeMethods.LoadPage(stream.Document, pageNumberIndex); // loads the page
 				var bmp = RenderPage(stream.Context, stream.Document, p, zoomFactor);
@@ -154,7 +150,7 @@ namespace MoonPdfLib.MuPdf
 			dev = IntPtr.Zero;
 
 			// creates a colorful bitmap of the same size of the pixmap
-			Bitmap bmp = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+			var bmp = new Bitmap(width, height, PixelFormat.Format24bppRgb);
 			var imageData = bmp.LockBits(new System.Drawing.Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, bmp.PixelFormat);
 			unsafe
 			{ // converts the pixmap data to Bitmap data
@@ -200,6 +196,11 @@ namespace MoonPdfLib.MuPdf
             
             public PdfFileStream(IPdfSource source)
             {
+				if (source is SecuredSource)
+				{
+					source = (source as SecuredSource).Source;
+				}
+
                 if (source is FileSource)
                 {
                     var fs = (FileSource)source;
@@ -316,39 +317,4 @@ namespace MoonPdfLib.MuPdf
         public float A, B, C, D, E, F;
     }
 #pragma warning restore 0649
-
-    public class MissingOrInvalidPdfPasswordException : Exception
-    {
-        public MissingOrInvalidPdfPasswordException()
-            : base("A password for the pdf document was either not provided or is invalid.")
-        { }
-    }
-
-    public interface IPdfSource
-    {}
-
-    public class FileSource : IPdfSource
-    {
-        public string Filename { get; private set; }
-
-        public FileSource(string filename)
-        {
-            this.Filename = filename;
-        }
-    }
-
-    public class MemorySource : IPdfSource
-    {
-        public byte[] Bytes { get; private set; }
-
-        public MemorySource(byte[] bytes)
-        {
-            Bytes = bytes;
-        }
-
-		public MemorySource(MemoryStream stream)
-		{
-			Bytes = stream.GetBuffer();
-		}
-    }
 }

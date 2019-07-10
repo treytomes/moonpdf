@@ -149,11 +149,19 @@ namespace MoonPdf
 
             if (IsPdfLoaded())
             {
-                var fs = moonPdfPanel.CurrentSource as FileSource;
+				FileSource fs = null;
+				if (moonPdfPanel.CurrentSource is SecuredSource)
+				{
+					fs = (moonPdfPanel.CurrentSource as SecuredSource).Source as FileSource;
+				}
+				else
+				{
+					fs = moonPdfPanel.CurrentSource as FileSource;
+				}
 
                 if( fs != null )
                 {
-                    this.Title = string.Format("{0} - {1}", System.IO.Path.GetFileName(fs.Filename), appName);
+                    Title = string.Format("{0} - {1}", System.IO.Path.GetFileName(fs.Filename), appName);
                     return;
                 }
             }

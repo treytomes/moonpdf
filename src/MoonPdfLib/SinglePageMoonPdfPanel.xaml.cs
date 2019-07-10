@@ -229,16 +229,22 @@ namespace MoonPdfLib
 
 		private void ZoomInternal(double zoomFactor)
 		{
-			if (zoomFactor > _parent.MaxZoomFactor)
+			if (_parent != null)
 			{
-				zoomFactor = _parent.MaxZoomFactor;
-			}
-			else if (zoomFactor < _parent.MinZoomFactor)
-			{
-				zoomFactor = _parent.MinZoomFactor;
+				if (zoomFactor > _parent.MaxZoomFactor)
+				{
+					zoomFactor = _parent.MaxZoomFactor;
+				}
+				else if (zoomFactor < _parent.MinZoomFactor)
+				{
+					zoomFactor = _parent.MinZoomFactor;
+				}
 			}
 
-			_imageProvider.Settings.ZoomFactor = (float)zoomFactor;
+			if (_imageProvider?.Settings != null)
+			{
+				_imageProvider.Settings.ZoomFactor = (float)zoomFactor;
+			}
 			SetItemsSource();
 		}
 
